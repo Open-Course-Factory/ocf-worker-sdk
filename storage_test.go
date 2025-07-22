@@ -2,6 +2,7 @@ package ocfworker
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -390,7 +391,11 @@ func TestStorageService_DownloadSource(t *testing.T) {
 		filename := "nonexistent.md"
 
 		server.On("GET", "/api/v1/storage/jobs/"+jobID+"/sources/"+filename, func(w http.ResponseWriter, r *http.Request) {
-			RespondError(w, http.StatusNotFound, "File not found")
+			apiErr := NewAPIError().
+				WithStatus(http.StatusNotFound).
+				WithMessage("File not found").
+				Build()
+			RespondAPIError(w, apiErr)
 		})
 
 		client := server.TestClient()
@@ -501,7 +506,11 @@ func TestStorageService_DownloadResult(t *testing.T) {
 		filename := "nonexistent.pdf"
 
 		server.On("GET", "/api/v1/storage/courses/"+courseID+"/results/"+filename, func(w http.ResponseWriter, r *http.Request) {
-			RespondError(w, http.StatusNotFound, "Result file not found")
+			apiErr := NewAPIError().
+				WithStatus(http.StatusNotFound).
+				WithMessage("Result file not found").
+				Build()
+			RespondAPIError(w, apiErr)
 		})
 
 		client := server.TestClient()
@@ -625,7 +634,7 @@ func TestDetectContentType(t *testing.T) {
 type errorReader struct{}
 
 func (r *errorReader) Read(p []byte) (n int, err error) {
-	return 0, assert.AnError
+	return 0, fmt.Errorf("simulated read error")
 }
 
 // Test integration scenarios

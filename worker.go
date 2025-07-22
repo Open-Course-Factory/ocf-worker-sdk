@@ -1,9 +1,11 @@
 package ocfworker
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -23,13 +25,21 @@ func (s *WorkerService) Health(ctx context.Context) (*models.WorkerHealthRespons
 	}
 	defer resp.Body.Close()
 
+	// Lire le body une seule fois
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
 	var health models.WorkerHealthResponse
-	if err := json.NewDecoder(resp.Body).Decode(&health); err != nil {
+	if err := json.Unmarshal(body, &health); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	// Le code de retour peut être 200 ou 503 selon l'état
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusServiceUnavailable {
+		// Créer un nouveau reader pour parseAPIError
+		resp.Body = io.NopCloser(bytes.NewReader(body))
 		return &health, parseAPIError(resp)
 	}
 

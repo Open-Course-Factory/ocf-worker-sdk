@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 type TestServer struct {
 	*httptest.Server
 	routes map[string]http.HandlerFunc
+	mu     sync.RWMutex // Ajout du mutex pour protéger la map
 }
 
 // NewTestServer creates a new test server for OCF Worker API
@@ -39,7 +41,11 @@ func NewTestServer() *TestServer {
 func (ts *TestServer) routeHandler(w http.ResponseWriter, r *http.Request) {
 	key := fmt.Sprintf("%s %s", r.Method, r.URL.Path)
 
-	if handler, exists := ts.routes[key]; exists {
+	ts.mu.RLock()
+	handler, exists := ts.routes[key]
+	ts.mu.RUnlock()
+
+	if exists {
 		handler(w, r)
 		return
 	}
@@ -55,7 +61,9 @@ func (ts *TestServer) routeHandler(w http.ResponseWriter, r *http.Request) {
 // On registers a route handler
 func (ts *TestServer) On(method, path string, handler http.HandlerFunc) {
 	key := fmt.Sprintf("%s %s", method, path)
+	ts.mu.Lock()
 	ts.routes[key] = handler
+	ts.mu.Unlock()
 }
 
 // TestClient creates a client configured for testing

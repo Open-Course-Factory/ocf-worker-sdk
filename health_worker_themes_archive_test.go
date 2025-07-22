@@ -67,8 +67,13 @@ func TestHealthService_Check(t *testing.T) {
 	})
 
 	t.Run("unexpected status code", func(t *testing.T) {
+		apiErr := NewAPIError().
+			WithStatus(http.StatusBadRequest).
+			WithMessage("Bad request").
+			Build()
+
 		server.On("GET", "/api/v1/health", func(w http.ResponseWriter, r *http.Request) {
-			RespondError(w, http.StatusBadRequest, "Bad request")
+			RespondAPIError(w, apiErr)
 		})
 
 		client := server.TestClient()
@@ -77,7 +82,7 @@ func TestHealthService_Check(t *testing.T) {
 		health, err := client.Health.Check(ctx)
 
 		require.Error(t, err)
-		assert.NotNil(t, health) // Health object is still returned
+		assert.Nil(t, health)
 		AssertAPIError(t, err, http.StatusBadRequest, "Bad request")
 	})
 }
@@ -240,7 +245,7 @@ func TestThemesService_DetectForJob(t *testing.T) {
 		result, err := client.Themes.DetectForJob(ctx, jobID)
 
 		require.NoError(t, err)
-		assert.Len(t, result.DetectedCount, 2)
+		assert.Equal(t, 2, result.DetectedCount)
 		assert.Contains(t, result.MissingThemes, "academic")
 		assert.Contains(t, result.MissingThemes, "custom-theme")
 	})
@@ -686,7 +691,11 @@ func TestArchiveService_DownloadArchive(t *testing.T) {
 		courseID := uuid.New().String()
 
 		server.On("GET", "/api/v1/storage/courses/"+courseID+"/archive", func(w http.ResponseWriter, r *http.Request) {
-			RespondError(w, http.StatusNotFound, "Course not found")
+			apiErr := NewAPIError().
+				WithStatus(http.StatusNotFound).
+				WithMessage("Course not found").
+				Build()
+			RespondAPIError(w, apiErr)
 		})
 
 		client := server.TestClient()
@@ -701,7 +710,11 @@ func TestArchiveService_DownloadArchive(t *testing.T) {
 		courseID := uuid.New().String()
 
 		server.On("GET", "/api/v1/storage/courses/"+courseID+"/archive", func(w http.ResponseWriter, r *http.Request) {
-			RespondError(w, http.StatusInternalServerError, "Failed to generate archive")
+			apiErr := NewAPIError().
+				WithStatus(http.StatusInternalServerError).
+				WithMessage("Failed to generate archive").
+				Build()
+			RespondAPIError(w, apiErr)
 		})
 
 		client := server.TestClient()

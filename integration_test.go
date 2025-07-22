@@ -424,10 +424,10 @@ func TestTimeoutHandling(t *testing.T) {
 			RespondJSON(w, http.StatusOK, job)
 		})
 
-		ctx, _ := TestContext()
+		ctx, _ := TestContext(5 * time.Second) // Contexte plus long
 		opts := &WaitOptions{
 			Interval: 50 * time.Millisecond,
-			Timeout:  100 * time.Millisecond,
+			Timeout:  100 * time.Millisecond, // Plus court que le contexte
 		}
 
 		_, err := client.Jobs.WaitForCompletion(ctx, jobID.String(), opts)

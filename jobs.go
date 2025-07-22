@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Open-Course-Factory/ocf-worker/pkg/models" // Réutilisation des types
@@ -138,7 +139,8 @@ func (s *JobsService) WaitForCompletion(ctx context.Context, jobID string, opts 
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, opts.Timeout)
+	// Créer un contexte avec timeout pour le polling global
+	waitCtx, cancel := context.WithTimeout(context.Background(), opts.Timeout)
 	defer cancel()
 
 	ticker := time.NewTicker(opts.Interval)
@@ -148,11 +150,17 @@ func (s *JobsService) WaitForCompletion(ctx context.Context, jobID string, opts 
 
 	for {
 		select {
+		case <-waitCtx.Done():
+			return nil, fmt.Errorf("timeout waiting for job completion: %w", waitCtx.Err())
 		case <-ctx.Done():
-			return nil, fmt.Errorf("timeout waiting for job completion: %w", ctx.Err())
+			return nil, fmt.Errorf("context canceled while waiting for job completion: %w", ctx.Err())
 		case <-ticker.C:
 			job, err := s.Get(ctx, jobID)
 			if err != nil {
+				if isTimeoutError(err) {
+					s.client.logger.Debug("Request timeout, retrying", "job_id", jobID)
+					continue
+				}
 				return nil, err
 			}
 
@@ -166,9 +174,17 @@ func (s *JobsService) WaitForCompletion(ctx context.Context, jobID string, opts 
 				s.client.logger.Error("Job failed", "job_id", jobID, "status", job.Status, "error", job.Error)
 				return job, fmt.Errorf("job failed with status %s: %s", job.Status, job.Error)
 			}
-			// Continue polling for pending/processing
 		}
 	}
+}
+
+func isTimeoutError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := err.Error()
+	return strings.Contains(errStr, "context deadline exceeded") ||
+		strings.Contains(errStr, "timeout")
 }
 
 type ListJobsOptions struct {
