@@ -1,0 +1,180 @@
+# GolangCI-Lint configuration for OCF Worker SDK
+run:
+  timeout: 5m
+  issues-exit-code: 1
+  tests: true
+  skip-dirs:
+    - vendor
+  skip-files:
+    - ".*\\.pb\\.go$"
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+
+linters-settings:
+  # Cyclometic complexity
+  cyclop:
+    max-complexity: 15
+    package-average: 10.0
+
+  # Cognitive complexity
+  gocognit:
+    min-complexity: 20
+
+  # Function length
+  funlen:
+    lines: 100
+    statements: 50
+
+  # File length
+  lll:
+    line-length: 120
+
+  # Naming conventions
+  stylecheck:
+    checks: ["all"]
+
+  # Error handling
+  errorlint:
+    errorf: true
+    asserts: true
+    comparison: true
+
+  # Documentation
+  godot:
+    scope: declarations
+    exclude:
+      - "^fixme:"
+      - "^todo:"
+    capital: false
+
+  # Imports
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/Open-Course-Factory)
+    skip-generated: true
+
+  # Unused code
+  unused:
+    check-exported: false
+
+  # Govet
+  govet:
+    check-shadowing: true
+    settings:
+      printf:
+        funcs:
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
+
+  # Security
+  gosec:
+    excludes:
+      - G404 # Use of weak random number generator - OK for non-crypto use
+
+linters:
+  enable:
+    # Enabled by default
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    
+    # Additional useful linters
+    - bodyclose          # HTTP response body close
+    - cyclop             # Cyclometic complexity
+    - dupl               # Code duplication
+    - durationcheck      # Duration checks
+    - errorlint          # Error handling
+    - exhaustive         # Enum switches
+    - exportloopref      # Loop variable reference
+    - funlen             # Function length
+    - gci                # Import formatting
+    - gocognit           # Cognitive complexity
+    - goconst            # Constants
+    - gocritic           # Various checks
+    - godot              # Comments punctuation
+    - gofmt              # Formatting
+    - goimports          # Import formatting
+    - gomnd              # Magic numbers
+    - goprintffuncname   # Printf function naming
+    - gosec              # Security
+    - lll                # Line length
+    - misspell           # Spelling
+    - nakedret           # Naked returns
+    - nestif             # Nested if
+    - nilerr             # Nil error return
+    - nolintlint         # Nolint comments
+    - prealloc           # Slice preallocation
+    - predeclared        # Predeclared identifiers
+    - revive             # Replacement for golint
+    - stylecheck         # Style checks
+    - unconvert          # Unnecessary conversions
+    - unparam            # Unused parameters
+    - whitespace         # Whitespace
+
+  disable:
+    - deadcode           # Deprecated, replaced by unused
+    - exhaustivestruct   # Too strict for this project
+    - forbidigo          # Not needed
+    - gochecknoglobals   # Globals are OK in some cases
+    - gochecknoinits     # Init functions are OK
+    - goerr113           # Too strict for wrapped errors
+    - golint             # Deprecated, replaced by revive
+    - interfacer         # Deprecated
+    - maligned           # Deprecated, replaced by govet fieldalignment
+    - nlreturn           # Too strict
+    - noctx              # Context usage varies by case
+    - paralleltest       # Not always applicable
+    - scopelint          # Deprecated, replaced by exportloopref
+    - structcheck        # Deprecated, replaced by unused
+    - testpackage        # Not enforcing separate test packages
+    - varcheck           # Deprecated, replaced by unused
+    - wrapcheck          # Too strict for all error wrapping
+    - wsl                # Whitespace style too strict
+
+issues:
+  # Maximum issues count per one linter
+  max-issues-per-linter: 0
+  
+  # Maximum count of issues with the same text
+  max-same-issues: 0
+
+  # Show only new issues
+  new: false
+
+  # Exclude specific issues
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gomnd
+        - funlen
+        - dupl
+        - lll
+        
+    # Exclude magic number detection in examples
+    - path: examples/
+      linters:
+        - gomnd
+        
+    # Allow long lines in generated code
+    - path: ".*\\.pb\\.go"
+      linters:
+        - lll
+        
+    # Ignore complexity in test helpers
+    - path: test_helpers\.go
+      linters:
+        - cyclop
+        - gocognit
