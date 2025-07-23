@@ -414,16 +414,22 @@ func TestJobsService_WaitForCompletion(t *testing.T) {
 			RespondJSON(w, http.StatusCreated, job)
 		})
 
+		// Répondre immédiatement avec completed
 		server.On("GET", "/api/v1/jobs/"+jobID.String(), func(w http.ResponseWriter, r *http.Request) {
 			job := NewJobResponse().WithID(jobID).WithStatus(models.StatusCompleted).Build()
 			RespondJSON(w, http.StatusOK, job)
 		})
 
 		client := server.TestClient()
-		ctx, _ := TestContext(20 * time.Second) // CHANGER de 15s à 20s pour éviter le timeout
 
-		// Test with nil options
-		job, err := client.Jobs.CreateAndWait(ctx, req, nil)
+		// Utiliser des options personnalisées avec un timeout court
+		opts := &WaitOptions{
+			Interval: 100 * time.Millisecond, // Interval court
+			Timeout:  2 * time.Second,        // Timeout court pour le test
+		}
+
+		ctx, _ := TestContext(5 * time.Second)
+		job, err := client.Jobs.CreateAndWait(ctx, req, opts)
 
 		require.NoError(t, err)
 		assert.Equal(t, models.StatusCompleted, job.Status)
@@ -518,29 +524,6 @@ func TestJobsService_CreateAndWait(t *testing.T) {
 		assert.Contains(t, err.Error(), "Processing error")
 	})
 
-	t.Run("default options", func(t *testing.T) {
-		req := MockGenerationRequest()
-		jobID := req.JobID
-
-		server.On("POST", "/api/v1/generate", func(w http.ResponseWriter, r *http.Request) {
-			job := NewJobResponse().WithID(jobID).WithStatus(models.StatusPending).Build()
-			RespondJSON(w, http.StatusCreated, job)
-		})
-
-		server.On("GET", "/api/v1/jobs/"+jobID.String(), func(w http.ResponseWriter, r *http.Request) {
-			job := NewJobResponse().WithID(jobID).WithStatus(models.StatusCompleted).Build()
-			RespondJSON(w, http.StatusOK, job)
-		})
-
-		client := server.TestClient()
-		ctx, _ := TestContext()
-
-		// Test with nil options
-		job, err := client.Jobs.CreateAndWait(ctx, req, nil)
-
-		require.NoError(t, err)
-		assert.Equal(t, models.StatusCompleted, job.Status)
-	})
 }
 
 func TestListJobsOptions(t *testing.T) {

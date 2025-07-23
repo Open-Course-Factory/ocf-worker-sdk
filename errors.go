@@ -3,6 +3,7 @@ package ocfworker
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -38,14 +39,43 @@ func (e *JobNotFoundError) Error() string {
 
 // parseAPIError extrait l'erreur depuis la réponse HTTP
 func parseAPIError(resp *http.Response) error {
-	var apiErr APIError
-	if err := json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return &APIError{
 			StatusCode: resp.StatusCode,
 			Message:    resp.Status,
 		}
 	}
 
-	apiErr.StatusCode = resp.StatusCode
-	return &apiErr
+	// D'abord essayer de décoder comme APIError complet
+	var apiErr APIError
+	if err := json.Unmarshal(body, &apiErr); err == nil && apiErr.Message != "" {
+		apiErr.StatusCode = resp.StatusCode
+		return &apiErr
+	}
+
+	// Ensuite essayer de décoder comme simple message d'erreur
+	var simpleErr struct {
+		Error   string `json:"error"`
+		Message string `json:"message"`
+	}
+
+	if err := json.Unmarshal(body, &simpleErr); err == nil {
+		message := simpleErr.Error
+		if message == "" {
+			message = simpleErr.Message
+		}
+		if message != "" {
+			return &APIError{
+				StatusCode: resp.StatusCode,
+				Message:    message,
+			}
+		}
+	}
+
+	// Si rien ne fonctionne, utiliser le status HTTP
+	return &APIError{
+		StatusCode: resp.StatusCode,
+		Message:    resp.Status,
+	}
 }

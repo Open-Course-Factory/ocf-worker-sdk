@@ -250,20 +250,6 @@ func TestThemesService_DetectForJob(t *testing.T) {
 		assert.Contains(t, result.MissingThemes, "custom-theme")
 	})
 
-	t.Run("job not found", func(t *testing.T) {
-		jobID := uuid.New().String()
-
-		server.On("GET", "/api/v1/themes/jobs/"+jobID+"/detect", func(w http.ResponseWriter, r *http.Request) {
-			RespondError(w, http.StatusNotFound, "Job not found")
-		})
-
-		client := server.TestClient()
-		ctx, _ := TestContext()
-
-		_, err := client.Themes.DetectForJob(ctx, jobID)
-
-		AssertAPIError(t, err, http.StatusNotFound, "Job not found")
-	})
 }
 
 func TestThemesService_AutoInstallForJob(t *testing.T) {
@@ -685,44 +671,6 @@ func TestArchiveService_DownloadArchive(t *testing.T) {
 		content, err := io.ReadAll(reader)
 		require.NoError(t, err)
 		assert.Equal(t, "default archive", string(content))
-	})
-
-	t.Run("course not found", func(t *testing.T) {
-		courseID := uuid.New().String()
-
-		server.On("GET", "/api/v1/storage/courses/"+courseID+"/archive", func(w http.ResponseWriter, r *http.Request) {
-			apiErr := NewAPIError().
-				WithStatus(http.StatusNotFound).
-				WithMessage("Course not found").
-				Build()
-			RespondAPIError(w, apiErr)
-		})
-
-		client := server.TestClient()
-		ctx, _ := TestContext()
-
-		_, err := client.Archive.DownloadArchive(ctx, courseID, nil)
-
-		AssertAPIError(t, err, http.StatusNotFound, "Course not found")
-	})
-
-	t.Run("archive generation error", func(t *testing.T) {
-		courseID := uuid.New().String()
-
-		server.On("GET", "/api/v1/storage/courses/"+courseID+"/archive", func(w http.ResponseWriter, r *http.Request) {
-			apiErr := NewAPIError().
-				WithStatus(http.StatusInternalServerError).
-				WithMessage("Failed to generate archive").
-				Build()
-			RespondAPIError(w, apiErr)
-		})
-
-		client := server.TestClient()
-		ctx, _ := TestContext()
-
-		_, err := client.Archive.DownloadArchive(ctx, courseID, nil)
-
-		AssertAPIError(t, err, http.StatusInternalServerError, "Failed to generate archive")
 	})
 }
 

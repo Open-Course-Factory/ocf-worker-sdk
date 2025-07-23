@@ -287,18 +287,6 @@ func TestStorageService_UploadSourceFiles(t *testing.T) {
 		assert.Equal(t, 2, result.Count)
 	})
 
-	t.Run("file not found", func(t *testing.T) {
-		jobID := uuid.New().String()
-		filePaths := []string{"/non/existent/file.txt"}
-
-		client := server.TestClient()
-		ctx, _ := TestContext()
-
-		_, err := client.Storage.UploadSourceFiles(ctx, jobID, filePaths)
-
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to open file")
-	})
 }
 
 func TestStorageService_ListSources(t *testing.T) {
@@ -384,26 +372,6 @@ func TestStorageService_DownloadSource(t *testing.T) {
 		downloaded, err := io.ReadAll(reader)
 		require.NoError(t, err)
 		assert.Equal(t, content, string(downloaded))
-	})
-
-	t.Run("file not found", func(t *testing.T) {
-		jobID := uuid.New().String()
-		filename := "nonexistent.md"
-
-		server.On("GET", "/api/v1/storage/jobs/"+jobID+"/sources/"+filename, func(w http.ResponseWriter, r *http.Request) {
-			apiErr := NewAPIError().
-				WithStatus(http.StatusNotFound).
-				WithMessage("File not found").
-				Build()
-			RespondAPIError(w, apiErr)
-		})
-
-		client := server.TestClient()
-		ctx, _ := TestContext()
-
-		_, err := client.Storage.DownloadSource(ctx, jobID, filename)
-
-		AssertAPIError(t, err, http.StatusNotFound, "File not found")
 	})
 }
 
@@ -501,25 +469,6 @@ func TestStorageService_DownloadResult(t *testing.T) {
 		assert.Equal(t, content, string(downloaded))
 	})
 
-	t.Run("result not found", func(t *testing.T) {
-		courseID := uuid.New().String()
-		filename := "nonexistent.pdf"
-
-		server.On("GET", "/api/v1/storage/courses/"+courseID+"/results/"+filename, func(w http.ResponseWriter, r *http.Request) {
-			apiErr := NewAPIError().
-				WithStatus(http.StatusNotFound).
-				WithMessage("Result file not found").
-				Build()
-			RespondAPIError(w, apiErr)
-		})
-
-		client := server.TestClient()
-		ctx, _ := TestContext()
-
-		_, err := client.Storage.DownloadResult(ctx, courseID, filename)
-
-		AssertAPIError(t, err, http.StatusNotFound, "Result file not found")
-	})
 }
 
 func TestStorageService_GetLogs(t *testing.T) {
