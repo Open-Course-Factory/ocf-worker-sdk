@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"time"
 
 	ocfworker "ocf-worker-sdk"
@@ -114,4 +116,11 @@ func main() {
 		defer archiveReader.Close()
 		fmt.Println("Archive downloaded successfully")
 	}
+
+	file, err := os.Create("course-results.zip")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	io.Copy(file, archiveReader)
 }

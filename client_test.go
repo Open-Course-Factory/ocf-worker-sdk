@@ -202,8 +202,6 @@ func TestNewClient(t *testing.T) {
 	}
 }
 
-// NOUVEAUX TESTS - Démonstration des améliorations avec les interfaces
-
 func TestClient_WithMockedServices(t *testing.T) {
 	t.Run("test avec Jobs service mocké individuellement", func(t *testing.T) {
 		// Créer un client avec des services réels

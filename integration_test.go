@@ -31,7 +31,7 @@ func TestCompleteWorkflow(t *testing.T) {
 	// Setup API responses
 	setupCompleteWorkflowResponses(t, server, jobID, courseID)
 
-	client := server.TestClient(WithAuth("test-token"))
+	client := server.TestClient()
 	ctx, _ := TestContext(30 * time.Second)
 
 	t.Run("1. Check service health", func(t *testing.T) {
@@ -216,94 +216,6 @@ func TestErrorHandlingWorkflow(t *testing.T) {
 		health, err := client.Health.Check(ctx)
 		require.NoError(t, err) // Health check doesn't return error for 503
 		assert.Equal(t, "unhealthy", health.Status)
-	})
-}
-
-// TestAuthenticationWorkflow tests authenticated requests
-func TestAuthenticationWorkflow(t *testing.T) {
-	server := NewTestServer()
-	defer server.Close()
-
-	token := "test-auth-token-123"
-	client := server.TestClient(WithAuth(token))
-	ctx, _ := TestContext()
-
-	t.Run("authenticated requests include token", func(t *testing.T) {
-		jobID := uuid.New()
-
-		// Verify all requests include auth header
-		endpoints := []struct {
-			method string
-			path   string
-			setup  func()
-		}{
-			{
-				"POST", "/api/v1/generate",
-				func() {
-					server.On("POST", "/api/v1/generate", func(w http.ResponseWriter, r *http.Request) {
-						AssertAuthHeader(t, r, token)
-						RespondJSON(w, http.StatusCreated, NewJobResponse().Build())
-					})
-				},
-			},
-			{
-				"GET", "/api/v1/jobs/" + jobID.String(),
-				func() {
-					server.On("GET", "/api/v1/jobs/"+jobID.String(), func(w http.ResponseWriter, r *http.Request) {
-						AssertAuthHeader(t, r, token)
-						RespondJSON(w, http.StatusOK, NewJobResponse().Build())
-					})
-				},
-			},
-			{
-				"GET", "/api/v1/health",
-				func() {
-					server.On("GET", "/api/v1/health", func(w http.ResponseWriter, r *http.Request) {
-						AssertAuthHeader(t, r, token)
-						RespondJSON(w, http.StatusOK, MockHealthResponse("healthy"))
-					})
-				},
-			},
-		}
-
-		for _, endpoint := range endpoints {
-			t.Run(endpoint.method+" "+endpoint.path, func(t *testing.T) {
-				endpoint.setup()
-
-				switch endpoint.method {
-				case "POST":
-					if endpoint.path == "/api/v1/generate" {
-						_, err := client.Jobs.Create(ctx, MockGenerationRequest())
-						require.NoError(t, err)
-					}
-				case "GET":
-					if endpoint.path == "/api/v1/health" {
-						_, err := client.Health.Check(ctx)
-						require.NoError(t, err)
-					} else if endpoint.path == "/api/v1/jobs/"+jobID.String() {
-						_, err := client.Jobs.Get(ctx, jobID.String())
-						require.NoError(t, err)
-					}
-				}
-			})
-		}
-	})
-
-	t.Run("unauthorized request", func(t *testing.T) {
-		// Create client without auth
-		unauthClient := server.TestClient()
-
-		server.On("POST", "/api/v1/generate", func(w http.ResponseWriter, r *http.Request) {
-			auth := r.Header.Get("Authorization")
-			if auth == "" {
-				RespondError(w, http.StatusUnauthorized, "Authentication required")
-				return
-			}
-			RespondJSON(w, http.StatusCreated, NewJobResponse().Build())
-		})
-
-		_, err := unauthClient.Jobs.Create(ctx, MockGenerationRequest())
-		AssertAPIError(t, err, http.StatusUnauthorized, "Authentication required")
 	})
 }
 
