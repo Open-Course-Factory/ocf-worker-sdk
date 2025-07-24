@@ -25,13 +25,13 @@ type Client struct {
 	baseURL    string
 	logger     Logger
 
-	// Services
-	Jobs    *JobsService
-	Storage *StorageService
-	Worker  *WorkerService
-	Themes  *ThemesService
-	Health  *HealthService
-	Archive *ArchiveService
+	// Services - Utilisation des interfaces pour le découplage
+	Jobs    JobsServiceInterface
+	Storage StorageServiceInterface
+	Worker  WorkerServiceInterface
+	Themes  ThemesServiceInterface
+	Health  HealthServiceInterface
+	Archive ArchiveServiceInterface
 }
 
 // Option pour configurer le client
@@ -86,7 +86,7 @@ func NewClient(baseURL string, opts ...Option) *Client {
 		opt(client)
 	}
 
-	// Initialiser les services
+	// Initialiser les services avec leurs implémentations concrètes
 	client.Jobs = &JobsService{client: client}
 	client.Storage = &StorageService{client: client}
 	client.Worker = &WorkerService{client: client}
