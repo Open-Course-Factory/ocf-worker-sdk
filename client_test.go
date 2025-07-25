@@ -157,17 +157,10 @@ func TestNewClient(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "valid URL with auth option",
-			baseURL: "http://localhost:8081",
-			opts:    []Option{WithAuth("test-token")},
-			wantErr: false,
-		},
-		{
 			name:    "valid URL with multiple options",
 			baseURL: "http://localhost:8081",
 			opts: []Option{
 				WithTimeout(60 * time.Second),
-				WithAuth("test-token"),
 				WithLogger(&simpleLogger{}),
 			},
 			wantErr: false,

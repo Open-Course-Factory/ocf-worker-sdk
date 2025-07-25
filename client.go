@@ -6,7 +6,6 @@
 // # Basic Usage
 //
 //	client := ocfworker.NewClient("http://localhost:8081",
-//		ocfworker.WithAuth("your-token"),
 //		ocfworker.WithTimeout(60*time.Second),
 //	)
 //
@@ -84,7 +83,6 @@ type Logger interface {
 // Example:
 //
 //	client := ocfworker.NewClient("http://localhost:8081",
-//		ocfworker.WithAuth("bearer-token"),
 //		ocfworker.WithTimeout(30*time.Second),
 //	)
 //	defer client.Close() // If implemented
@@ -120,7 +118,6 @@ type Client struct {
 //
 //	client := ocfworker.NewClient(baseURL,
 //		ocfworker.WithTimeout(60*time.Second),
-//		ocfworker.WithAuth("token"),
 //		ocfworker.WithLogger(customLogger),
 //	)
 type Option func(*Client)
