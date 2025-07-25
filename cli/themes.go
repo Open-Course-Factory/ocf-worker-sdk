@@ -214,7 +214,7 @@ func runThemesAutoInstall(cmd *cobra.Command, args []string) error {
 			}
 
 			cmd.Printf("  %s %s", status, themeResult.Theme)
-			cmd.Printf(" (%s)", themeResult.Duration)
+			cmd.Printf(" (%d)", themeResult.Duration)
 
 			cmd.Printf("\n")
 

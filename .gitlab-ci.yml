@@ -1,0 +1,132 @@
+# GitLab CI/CD Configuration for OCF Worker SDK
+variables:
+  GO_VERSION: "1.23.7"
+  CGO_ENABLED: "0"
+  GOOS: "linux"
+  GOARCH: "amd64"
+
+stages:
+  - validate
+  - test
+  - security
+  - quality
+
+# Cache Go modules
+.go_cache: &go_cache
+  cache:
+    key: go-mod-$CI_COMMIT_REF_SLUG
+    paths:
+      - .go/pkg/mod/
+
+# Go base job template
+.go_job: &go_job
+  image: golang:${GO_VERSION}
+  <<: *go_cache
+  before_script:
+    - export GOPATH="$CI_PROJECT_DIR/.go"
+    - export PATH="$GOPATH/bin:$PATH"
+    - mkdir -p "$GOPATH/bin"
+    - go version
+    - go mod download
+
+# Validate Go code compiles
+validate:
+  <<: *go_job
+  stage: validate
+  script:
+    - go build ./...
+    - go vet ./...
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Run tests with coverage
+test:
+  <<: *go_job
+  stage: test
+  script:
+    - go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+    - go tool cover -func=coverage.out
+    - go tool cover -html=coverage.out -o coverage.html
+    # Convert to cobertura format for GitLab
+    - go install github.com/boumenot/gocover-cobertura@latest
+    - gocover-cobertura < coverage.out > coverage.xml
+  coverage: '/total:\s+\(statements\)\s+(\d+.\d+)%/'
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - coverage.html
+      - coverage.out
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Lint with golangci-lint
+lint:
+  stage: quality
+  image: golangci/golangci-lint:v1.59-alpine
+  script:
+    - golangci-lint --version
+    - golangci-lint run --out-format colored-line-number --issues-exit-code 0
+  artifacts:
+    when: always
+    expire_in: 1 week
+    reports:
+      junit: gl-code-quality-report.xml
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Security scan with gosec
+security:
+  <<: *go_job
+  stage: security
+  script:
+    - go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+    - gosec -fmt json -out gosec-report.json ./...
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - gosec-report.json
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Dependency check
+dependency-check:
+  <<: *go_job
+  stage: security
+  script:
+    - go list -json -deps ./... | nancy sleuth
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Coverage gate
+coverage-gate:
+  <<: *go_job
+  stage: quality
+  script:
+    - |
+      COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+      echo "Current coverage: ${COVERAGE}%"
+      THRESHOLD=80.0
+      if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+        echo "Coverage ${COVERAGE}% is below threshold ${THRESHOLD}%"
+        exit 1
+      else
+        echo "Coverage ${COVERAGE}% meets threshold ${THRESHOLD}%"
+      fi
+  dependencies:
+    - test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

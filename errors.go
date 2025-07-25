@@ -173,7 +173,7 @@ func parseAPIError(resp *http.Response) error {
 	if err != nil {
 		return &APIError{
 			StatusCode: resp.StatusCode,
-			Message:    resp.Status,
+			Message:    string(body),
 		}
 	}
 
@@ -198,7 +198,7 @@ func parseAPIError(resp *http.Response) error {
 		if message != "" {
 			return &APIError{
 				StatusCode: resp.StatusCode,
-				Message:    message,
+				Message:    string(body),
 			}
 		}
 	}

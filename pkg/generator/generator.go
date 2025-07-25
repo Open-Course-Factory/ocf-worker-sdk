@@ -100,6 +100,11 @@ func (g *Generator) Generate(ctx context.Context) (*Result, error) {
 	// 7. Génération
 	_, err = g.createAndWaitJob(ctx, jobID, courseID)
 	if err != nil {
+		logs, errLogs := g.client.Storage.GetLogs(ctx, jobID.String())
+		if errLogs != nil {
+			return nil, fmt.Errorf("génération échouée: %w", err)
+		}
+		g.logger.Printf("log slidev: %s", logs)
 		return nil, fmt.Errorf("génération échouée: %w", err)
 	}
 

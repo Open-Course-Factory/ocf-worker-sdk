@@ -2,10 +2,12 @@ package generator
 
 import (
 	"archive/zip"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // isSlidevFile vérifie si un fichier est supporté par Slidev
@@ -105,4 +107,24 @@ func extractZipFile(zipPath, outputDir string) ([]string, error) {
 	}
 
 	return files, nil
+}
+
+type ProgressReader struct {
+	io.Reader
+	bytesRead int64
+	lastLog   time.Time
+}
+
+func (pr *ProgressReader) Read(p []byte) (int, error) {
+	n, err := pr.Reader.Read(p)
+	pr.bytesRead += int64(n)
+
+	// Log progress every 5 seconds
+	if time.Since(pr.lastLog) > 5*time.Second {
+		fmt.Printf("Downloaded: %d bytes (%.2f MB)\n", pr.bytesRead, float64(pr.bytesRead)/(1024*1024))
+
+		pr.lastLog = time.Now()
+	}
+
+	return n, err
 }

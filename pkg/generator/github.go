@@ -28,6 +28,13 @@ func NewGitHubDownloader() *GitHubDownloader {
 
 // DownloadRepo télécharge et extrait un dépôt GitHub
 func (d *GitHubDownloader) DownloadRepo(ctx context.Context, repoURL, outputDir, subfolder string) ([]string, error) {
+	if deadline, ok := ctx.Deadline(); ok {
+		fmt.Printf("Context deadline: %v (time remaining: %v)\n", deadline, time.Until(deadline))
+	}
+
+	// Check your HTTP client timeout
+	fmt.Printf("HTTP client timeout: %v\n", d.httpClient.Timeout)
+
 	// Parser l'URL GitHub
 	owner, repo, branch, subPath := parseGitHubURL(repoURL)
 	if owner == "" || repo == "" {
@@ -44,13 +51,23 @@ func (d *GitHubDownloader) DownloadRepo(ctx context.Context, repoURL, outputDir,
 	}
 
 	// Construire l'URL ZIP
-	zipURL := fmt.Sprintf("https://github.com/%s/%s/archive/%s.zip", owner, repo, branch)
+	zipURL := fmt.Sprintf("https://github.com/%s/%s/archive/refs/heads/%s.zip", owner, repo, branch)
 
 	// Télécharger
 	req, err := http.NewRequestWithContext(ctx, "GET", zipURL, nil)
 	if err != nil {
 		return nil, err
 	}
+
+	originalTimeout := d.httpClient.Timeout
+
+	// Remove timeout for this request
+	d.httpClient.Timeout = 0 // 0 means no timeout
+
+	// Restore it after
+	defer func() {
+		d.httpClient.Timeout = originalTimeout
+	}()
 
 	resp, err := d.httpClient.Do(req)
 	if err != nil {
@@ -71,7 +88,9 @@ func (d *GitHubDownloader) DownloadRepo(ctx context.Context, repoURL, outputDir,
 	defer tempFile.Close()
 
 	// Copier le contenu
-	if _, err := io.Copy(tempFile, resp.Body); err != nil {
+	progressReader := &ProgressReader{Reader: resp.Body, lastLog: time.Now()}
+	if _, err := io.Copy(tempFile, progressReader); err != nil {
+		fmt.Printf("Copy failed after downloading %d bytes: %v\n", progressReader.bytesRead, err)
 		return nil, err
 	}
 

@@ -50,7 +50,6 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	config := &generator.Config{
 		GitHubURL:    githubURL,
 		APIBaseURL:   viper.GetString("api-url"),
-		AuthToken:    viper.GetString("token"),
 		OutputDir:    outputDir,
 		Subfolder:    subfolder,
 		Timeout:      viper.GetDuration("timeout"),

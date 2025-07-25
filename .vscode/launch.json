@@ -29,7 +29,7 @@
       "env": {
         "LOG_LEVEL": "debug",
       },
-      "args": ["generate", "https://github.com/nekomeowww/talks/tree/main/packages/2024-08-23-kubecon-hk"],
+      "args": ["generate", "https://github.com/ttamoud/presentation"],
       "showLog": true,
       "trace": "verbose",
     },
