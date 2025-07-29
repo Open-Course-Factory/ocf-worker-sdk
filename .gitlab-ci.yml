@@ -233,7 +233,7 @@ upload-packages:
       for file in dist/*.deb; do
         if [ -f "$file" ]; then
           echo "Uploading $(basename "$file")..."
-          curl --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+          curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" \
                --upload-file "$file" \
                "${PACKAGE_REGISTRY_URL}/$(basename "$file")"
         fi
@@ -242,7 +242,7 @@ upload-packages:
       for file in dist/*.tar.gz; do
         if [ -f "$file" ]; then
           echo "Uploading $(basename "$file")..."
-          curl --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+          curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" \
                --upload-file "$file" \
                "${PACKAGE_REGISTRY_URL}/$(basename "$file")"
         fi
