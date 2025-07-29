@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/homebrew/bin/bash
 # OCF Worker CLI - Installation universelle
 # Usage: curl -s https://usine.solution-libre.fr/open-course-factory/ocf-worker-sdk/-/raw/main/install.sh | bash
 
@@ -47,12 +47,12 @@ log_error() {
 print_banner() {
     echo -e "${BLUE}"
     cat << 'EOF'
-    ____   _____ ______   _      _            _                  _____  _      _____ 
-   / __ \ / ____|  ____| | |    | |          | |                / ____|| |    |_   _|
-  | |  | | |    | |__    | |    | |  ___   _ _| | _  ___  _ __  | |     | |      | |  
+    ____   _____ ______   _      _              _                   _____  _      _____ 
+   / __ \ / ____|  ____| | |    | |            | |                 / ____|| |    |_   _|
+  | |  | | |    | |__    | |    | |  ___   _ _ | | _   ___  _ _   | |     | |      | |  
   | |  | | |    |  __|   | |    | | / _ \ | '__| |/ / / _ \| '__| | |     | |      | |  
-  | |__| | |____| |      | |____| || (_) || |  |   < |  __/| |   | |____ | |____ _| |_ 
-   \____/ \_____|_|      |______| | \___/ |_|  |_|\_\ \___||_|    \_____||______|_____|
+  | |__| | |____| |      | |_/\_| || (_) || |  |   < |  __/| |    | |____ | |____ _| |_ 
+   \____/ \_____|_|      |______| | \___/ |_|  |_|\_\ \___||_|     \_____||______|_____|
 
 EOF
     echo -e "${NC}"
@@ -120,16 +120,41 @@ check_prerequisites() {
 get_latest_version() {
     if [[ "$VERSION" == "latest" ]]; then
         log_info "Récupération de la dernière version..."
+
+        # Essayer plusieurs méthodes pour récupérer les tags
+        local api_urls=(
+            "${REPO_URL}/-/refs/tags?format=json"
+            "${REPO_URL}/-/tags?format=json"
+            "${REPO_URL}/tags?format=json"
+        )
+
+        for api_url in "${api_urls[@]}"; do
+            log_info "Tentative de récupération depuis: $api_url"
+            
+            # Utiliser curl avec plus d'options pour contourner les redirections
+            VERSION=$(curl -L -s -H "Accept: application/json" -H "User-Agent: OCF-Installer/1.0" "$api_url" 2>/dev/null | \
+                grep -o '"name":"v[^"]*"' | head -1 | sed 's/"name":"v\([^"]*\)"/\1/' || echo "")
+            
+            if [[ -n "$VERSION" ]]; then
+                log_success "Version détectée: v$VERSION"
+                return
+            fi
+        done
+
+        # Si toutes les tentatives échouent, essayer avec l'API publique GitLab
+        log_info "Tentative avec l'API GitLab publique..."
+        local project_path="open-course-factory%2Focf-worker-sdk"
+        local gitlab_api="https://usine.solution-libre.fr/api/v4/projects/${project_path}/repository/tags"
         
-        # Utiliser l'API GitLab pour récupérer les tags
-        local api_url="${REPO_URL}/-/refs/tags?format=json"
-        VERSION=$(curl -s "$api_url" | grep -o '"name":"v[^"]*"' | head -1 | sed 's/"name":"v\([^"]*\)"/\1/' || echo "")
-        
-        if [[ -z "$VERSION" ]]; then
-            log_warning "Impossible de détecter la version, utilisation de 'main'"
-            VERSION="main"
+        VERSION=$(curl -L -s -H "Accept: application/json" "$gitlab_api" 2>/dev/null | \
+            grep -o '"name":"v[^"]*"' | head -1 | sed 's/"name":"v\([^"]*\)"/\1/' || echo "")
+
+        if [[ -n "$VERSION" ]]; then
+            log_success "Version détectée via API: v$VERSION"
         else
-            log_success "Version détectée: v$VERSION"
+            log_warning "Impossible de détecter la version automatiquement"
+            log_info "Utilisation de la version 'main' par défaut"
+            VERSION="main"
         fi
     fi
 }
@@ -267,12 +292,12 @@ print_completion_message() {
     echo "📚 Commandes utiles:"
     echo "  $BINARY_NAME --help                    # Aide générale"
     echo "  $BINARY_NAME health                    # Vérifier la connexion"
-    echo "  $BINARY_NAME generate <github-url>    # Générer une présentation"
+    echo "  $BINARY_NAME generate <github-url>     # Générer une présentation"
     echo ""
     echo "🔧 Autocomplétion:"
     echo "  Redémarrez votre shell ou exécutez:"
     echo "  source /etc/bash_completion.d/$BINARY_NAME  # Bash"
-    echo "  autoload -U compinit && compinit             # Zsh"
+    echo "  autoload -U compinit && compinit              # Zsh"
     echo ""
     echo "📖 Documentation complète:"
     echo "  $REPO_URL"
