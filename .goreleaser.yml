@@ -41,7 +41,7 @@ archives:
     ids: ['ocf-worker-cli']
     formats: ['tar.gz']
     name_template: >-
-      {{ .ProjectName }}_
+      ocf-worker-cli_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
@@ -109,7 +109,7 @@ nfpms:
         dst: /usr/share/zsh/vendor-completions/_ocf-worker-cli
         file_info:
           mode: 0644
-          
+
     scripts:
       postinstall: scripts/postinstall.sh
       preremove: scripts/preremove.sh
