@@ -1,15 +1,19 @@
 # GitLab CI/CD Configuration for OCF Worker SDK
 variables:
-  GO_VERSION: "1.23.7"
+  GO_VERSION: "1.24.5"
   CGO_ENABLED: "0"
   GOOS: "linux"
   GOARCH: "amd64"
+  GORELEASER_VERSION: "v1.24.5"
 
 stages:
   - validate
   - test
   - security
   - quality
+  - build
+  - release
+  - distribute
 
 # Cache Go modules
 .go_cache: &go_cache
@@ -130,3 +134,224 @@ coverage-gate:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ==============================
+# BUILD & PACKAGING (Nouvelle phase)
+# ==============================
+
+# Build des binaires pour développement
+build-dev:
+  <<: *go_job
+  stage: build
+  script:
+    - echo "🔨 Build de développement..."
+    - make build
+    - ./ocf-worker-cli --version
+  artifacts:
+    paths:
+      - ocf-worker-cli
+    expire_in: 1 day
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+# Génération des fichiers d'autocomplétion
+generate-completion:
+  <<: *go_job
+  stage: build
+  script:
+    - echo "🔧 Génération de l'autocomplétion..."
+    - make completion
+  artifacts:
+    paths:
+      - scripts/completion/
+    expire_in: 1 week
+  dependencies:
+    - build-dev
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+# Build GoReleaser (snapshot pour branches)
+build-snapshot:
+  stage: build
+  image: goreleaser/goreleaser:${GORELEASER_VERSION}
+  dependencies:
+    - generate-completion
+  before_script:
+    - apk add --no-cache make git
+  script:
+    - echo "📦 Build GoReleaser (snapshot)..."
+    - goreleaser build --clean --snapshot
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ==============================
+# RELEASES (Pour les tags uniquement)
+# ==============================
+
+# Release complète avec GoReleaser (tags uniquement)
+release:
+  stage: release
+  image: goreleaser/goreleaser:${GORELEASER_VERSION}
+  dependencies:
+    - test
+    - lint
+    - generate-completion
+  before_script:
+    - apk add --no-cache make git
+  script:
+    - echo "🚀 Release GoReleaser..."
+    - goreleaser release --clean
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 month
+  rules:
+    - if: $CI_COMMIT_TAG
+
+# Upload vers GitLab Package Registry
+upload-packages:
+  stage: release
+  image: curlimages/curl:latest
+  dependencies:
+    - release
+  script:
+    - echo "📤 Upload vers GitLab Package Registry..."
+    - |
+      for file in dist/*.deb; do
+        if [ -f "$file" ]; then
+          echo "Uploading $(basename "$file")..."
+          curl --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+               --upload-file "$file" \
+               "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/ocf-worker-cli/${CI_COMMIT_TAG}/$(basename "$file")"
+        fi
+      done
+    - |
+      for file in dist/*.tar.gz; do
+        if [ -f "$file" ]; then
+          echo "Uploading $(basename "$file")..."
+          curl --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+               --upload-file "$file" \
+               "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/ocf-worker-cli/${CI_COMMIT_TAG}/$(basename "$file")"
+        fi
+      done
+  rules:
+    - if: $CI_COMMIT_TAG
+
+# ==============================
+# DISTRIBUTION (Scripts d'installation)
+# ==============================
+
+# Validation du script d'installation
+validate-install-script:
+  stage: distribute
+  image: ubuntu:22.04
+  before_script:
+    - apt-get update && apt-get install -y curl tar bash shellcheck
+  script:
+    - echo "🔍 Validation du script d'installation..."
+    - shellcheck install.sh
+    - echo "✅ Script d'installation validé"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+# Test d'installation sur différents OS
+.test-install-template: &test-install-template
+  stage: distribute
+  dependencies:
+    - release
+  script:
+    - echo "🧪 Test d'installation sur $OS_NAME..."
+    - chmod +x install.sh
+    - ./install.sh --version ${CI_COMMIT_TAG#v}
+    - ocf-worker-cli --version
+    - echo "✅ Installation testée avec succès"
+  rules:
+    - if: $CI_COMMIT_TAG
+
+test-install-ubuntu:
+  <<: *test-install-template
+  image: ubuntu:22.04
+  variables:
+    OS_NAME: "Ubuntu 22.04"
+  before_script:
+    - apt-get update && apt-get install -y curl tar
+
+test-install-debian:
+  <<: *test-install-template
+  image: debian:12
+  variables:
+    OS_NAME: "Debian 12"
+  before_script:
+    - apt-get update && apt-get install -y curl tar
+
+# Déploiement du script d'installation
+deploy-install-script:
+  stage: distribute
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - echo "🌐 Déploiement du script d'installation..."
+    - |
+      # Upload du script d'installation vers GitLab
+      curl --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+           --upload-file "install.sh" \
+           "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/files/install.sh/raw?branch=main"
+    - echo "✅ Script d'installation déployé"
+    - echo "📖 URL d'installation: ${CI_PROJECT_URL}/-/raw/main/install.sh"
+  rules:
+    - if: $CI_COMMIT_TAG
+
+# ==============================
+# NOTIFICATION & DOCUMENTATION
+# ==============================
+
+# Notification de release
+notify-release:
+  stage: distribute
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - echo "📢 Notification de release..."
+    - |
+      echo "🎉 Nouvelle release OCF Worker CLI ${CI_COMMIT_TAG}"
+      echo "📦 Paquets disponibles:"
+      echo "  - .deb (Debian/Ubuntu)"
+      echo "  - .tar.gz (Universel)"
+      echo ""
+      echo "💾 Installation rapide:"
+      echo "  curl -s ${CI_PROJECT_URL}/-/raw/main/install.sh | bash"
+      echo ""
+      echo "📖 Plus d'infos: ${CI_PROJECT_URL}/-/releases/${CI_COMMIT_TAG}"
+    # Ici vous pouvez ajouter des webhooks Slack, Discord, etc.
+  rules:
+    - if: $CI_COMMIT_TAG
+
+# Mise à jour de la documentation
+update-docs:
+  stage: distribute
+  image: alpine:latest
+  script:
+    - echo "📚 Mise à jour de la documentation..."
+    - |
+      # Générer les stats de release
+      echo "Release ${CI_COMMIT_TAG} créée automatiquement" > release-notes.md
+      echo "" >> release-notes.md
+      echo "## Installation" >> release-notes.md
+      echo '```bash' >> release-notes.md
+      echo "curl -s ${CI_PROJECT_URL}/-/raw/main/install.sh | bash" >> release-notes.md
+      echo '```' >> release-notes.md
+  artifacts:
+    paths:
+      - release-notes.md
+    expire_in: 1 month
+  rules:
+    - if: $CI_COMMIT_TAG
