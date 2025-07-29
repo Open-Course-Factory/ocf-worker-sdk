@@ -4,7 +4,7 @@ variables:
   CGO_ENABLED: "0"
   GOOS: "linux"
   GOARCH: "amd64"
-  GORELEASER_VERSION: "v1.24.5"
+  GORELEASER_VERSION: "v2.11.1"
 
 stages:
   - validate
