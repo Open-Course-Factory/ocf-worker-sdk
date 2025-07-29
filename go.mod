@@ -1,6 +1,6 @@
 module ocf-worker-sdk
 
-go 1.23.7
+go 1.24.5
 
 require (
 	github.com/Open-Course-Factory/ocf-worker v0.0.3

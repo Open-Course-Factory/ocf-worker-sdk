@@ -1,0 +1,133 @@
+# GoReleaser configuration for OCF Worker CLI
+# Documentation: https://goreleaser.com
+# Configuration version (required for GoReleaser v2)
+version: 2
+
+# Build configuration
+builds:
+  - id: ocf-worker-cli
+    # Path to main.go relative to project root
+    main: ./cli/main/main.go
+    
+    # Binary name
+    binary: ocf-worker-cli
+    
+    # Build flags
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+      - -X main.builtBy=goreleaser
+    
+    # Environment variables for build
+    env:
+      - CGO_ENABLED=0
+    
+    # Target platforms
+    goos:
+      - linux
+      - darwin
+    
+    goarch:
+      - amd64
+      - arm64
+
+# Archive configuration
+archives:
+  - id: default
+    ids: ['ocf-worker-cli']
+    formats: ['tar.gz']
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    
+    # Files to include in archive
+    files:
+      - README.md
+      - LICENSE*
+      - CHANGELOG*
+
+# Checksum file
+checksum:
+  name_template: 'checksums.txt'
+
+# Snapshot configuration (for unreleased versions)
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+# Debian packages (.deb) - VERSION CORRIGEE
+nfpms:
+  - id: ocf-worker-cli-deb
+    package_name: ocf-worker-cli
+    
+    # Builds à inclure
+    ids: ['ocf-worker-cli']
+    
+    # File name template for the package
+    file_name_template: "{{ .ConventionalFileName }}"
+    
+    # Package format
+    formats:
+      - deb
+    
+    # Vendor/Maintainer info
+    vendor: "Open Course Factory"
+    homepage: "https://github.com/Open-Course-Factory/ocf-worker-sdk"
+    maintainer: "OCF Team <team@opencourse.factory>"
+    description: "OCF Worker CLI - Generate Slidev presentations from GitHub repositories"
+    license: "AGPL-3.0"
+    
+    # Package metadata
+    priority: optional
+    section: utils
+    
+    # Dependencies
+    dependencies:
+      - git
+      - curl
+    
+    # CORRECTION : Supprimer la section contents qui causait la collision
+    # GoReleaser inclut automatiquement le binaire dans /usr/bin/
+    # Si on veut ajouter des fichiers supplémentaires plus tard, on le fera ici
+    # contents:
+    #   - src: completion/bash_completion
+    #     dst: /usr/share/bash-completion/completions/ocf-worker-cli
+
+# Release configuration
+release:
+  # Disable release for now (we'll use GitLab later)
+  disable: true
+  
+  # Draft release
+  draft: false
+  
+  # Prerelease detection
+  prerelease: auto
+
+# Changelog configuration
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^build:"
+      - "^style:"
+      - "typo"
+  groups:
+    - title: Features
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: 'Bug fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: Others
+      order: 999
