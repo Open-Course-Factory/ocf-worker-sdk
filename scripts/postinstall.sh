@@ -5,11 +5,6 @@ set -e
 
 echo "📦 Configuration d'OCF Worker CLI..."
 
-# Add /usr/bin to PATH if not already there (should be by default)
-if ! echo "$PATH" | grep -q "/usr/bin"; then
-    echo "⚠️  /usr/bin n'est pas dans le PATH, cela peut causer des problèmes"
-fi
-
 # Test if the binary is accessible
 if command -v ocf-worker-cli >/dev/null 2>&1; then
     echo "✅ OCF Worker CLI installé avec succès"
@@ -19,16 +14,22 @@ else
     exit 1
 fi
 
-# Reload bash completion if bash-completion is installed
-if [ -f /usr/share/bash-completion/bash_completion ]; then
-    echo "🔄 Rechargement de l'autocomplétion Bash..."
-    # Note: This only affects new shell sessions
+# Configuration de l'autocomplétion
+echo "🔄 Configuration de l'autocomplétion..."
+
+# Bash completion
+if [ -f /usr/share/bash-completion/completions/ocf-worker-cli ]; then
+    echo "✅ Autocomplétion Bash installée"
+    # Pas besoin de recharger ici, elle sera active au prochain démarrage de shell
+else
+    echo "⚠️ Fichier d'autocomplétion Bash manquant"
 fi
 
-# Reload zsh completion if zsh is installed
-if command -v zsh >/dev/null 2>&1; then
-    echo "🔄 Configuration de l'autocomplétion Zsh..."
-    # The completion file is already in the right place
+# Zsh completion
+if [ -f /usr/share/zsh/vendor-completions/_ocf-worker-cli ]; then
+    echo "✅ Autocomplétion Zsh installée"
+else
+    echo "⚠️ Fichier d'autocomplétion Zsh manquant"
 fi
 
 echo ""
@@ -38,9 +39,11 @@ echo "Pour commencer:"
 echo "  ocf-worker-cli --help"
 echo "  ocf-worker-cli health"
 echo ""
-echo "Pour l'autocomplétion, redémarrez votre shell ou exécutez:"
+echo "🔧 Pour activer l'autocomplétion dans votre shell actuel:"
 echo "  # Bash:"
 echo "  source /usr/share/bash-completion/completions/ocf-worker-cli"
 echo "  # Zsh:"
 echo "  autoload -U compinit && compinit"
+echo ""
+echo "💡 L'autocomplétion sera automatiquement active dans les nouveaux shells."
 echo ""

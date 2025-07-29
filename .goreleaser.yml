@@ -92,13 +92,27 @@ nfpms:
     dependencies:
       - git
       - curl
+
+    # Recommends (packages that enhance the experience)
+    recommends:
+      - bash-completion
     
-    # CORRECTION : Supprimer la section contents qui causait la collision
-    # GoReleaser inclut automatiquement le binaire dans /usr/bin/
-    # Si on veut ajouter des fichiers supplémentaires plus tard, on le fera ici
-    # contents:
-    #   - src: completion/bash_completion
-    #     dst: /usr/share/bash-completion/completions/ocf-worker-cli
+    contents:
+      # Autocomplétion Bash
+      - src: scripts/completion/bash_completion
+        dst: /usr/share/bash-completion/completions/ocf-worker-cli
+        file_info:
+          mode: 0644
+
+      # Autocomplétion Zsh
+      - src: scripts/completion/zsh_completion
+        dst: /usr/share/zsh/vendor-completions/_ocf-worker-cli
+        file_info:
+          mode: 0644
+          
+    scripts:
+      postinstall: scripts/postinstall.sh
+      preremove: scripts/preremove.sh
 
 # Release configuration
 release:
