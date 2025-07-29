@@ -199,7 +199,9 @@ build-snapshot:
 # Release complète avec GoReleaser (tags uniquement)
 release:
   stage: release
-  image: goreleaser/goreleaser:${GORELEASER_VERSION}
+  image: 
+    name: goreleaser/goreleaser:${GORELEASER_VERSION}
+    entrypoint: [""]
   dependencies:
     - test
     - lint
