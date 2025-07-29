@@ -274,7 +274,7 @@ update-docs:
 
 release:
   stage: release
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  image: registry.gitlab.com/gitlab-org/cli:latest
   dependencies: 
    - update-docs
    - goreleaser
@@ -282,20 +282,21 @@ release:
     - if: $CI_COMMIT_TAG
   script:
     - |
-      # generate asset link arguments in a loop
-      asset_args=()
-      for file in dist/*.tar.gz; do
-        if [ -f "$file" ]; then
-          url="${PACKAGE_REGISTRY_URL}/$(basename "$file")"
-          asset_info='{"name":"'$file'","url":'$url'"}'
-          asset_args+=(--assets-link $asset_info)
-        fi
-      done
-      release-cli create \
-      --name "Release ${VERSION}" \
-      --tag-name $CI_COMMIT_TAG \
-      --description release-notes.md \
-      "${asset_args[@]}"
+      glab release create ${VERSION} -F release-notes.md ./dist/*
+      # # generate asset link arguments in a loop
+      # asset_args=()
+      # for file in dist/*.tar.gz; do
+      #   if [ -f "$file" ]; then
+      #     url="${PACKAGE_REGISTRY_URL}/$(basename "$file")"
+      #     asset_info='{"name":"'$file'","url":'$url'"}'
+      #     asset_args+=(--assets-link $asset_info)
+      #   fi
+      # done
+      # release-cli create \
+      # --name "Release ${VERSION}" \
+      # --tag-name $CI_COMMIT_TAG \
+      # --description release-notes.md \
+      # "${asset_args[@]}"
 
 # ==============================
 # DISTRIBUTION (Scripts d'installation)
