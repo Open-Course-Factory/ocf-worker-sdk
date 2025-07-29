@@ -74,7 +74,8 @@ detect_platform() {
     fi
     
     # Détection de l'architecture
-    local arch=$(uname -m)
+    local arch
+    arch=$(uname -m)
     case $arch in
         x86_64|amd64)
             DETECTED_ARCH="amd64"
@@ -160,8 +161,9 @@ build_download_url() {
 download_and_install() {
     log_info "Téléchargement d'OCF Worker CLI..."
     
-    local temp_dir=$(mktemp -d)
-    local archive_path="$temp_dir/ocf-worker-cli.tar.gz"
+    local temp_dir archive_path
+    temp_dir=$(mktemp -d)
+    archive_path="$temp_dir/ocf-worker-cli.tar.gz"
     
     # Télécharger l'archive
     if ! curl -L -f -s -o "$archive_path" "$DOWNLOAD_URL"; then
@@ -175,7 +177,8 @@ download_and_install() {
     tar -xzf "$archive_path" -C "$temp_dir"
     
     # Trouver le binaire
-    local binary_path=$(find "$temp_dir" -name "$BINARY_NAME" -type f | head -1)
+    local binary_path
+    binary_path=$(find "$temp_dir" -name "$BINARY_NAME" -type f | head -1)
     if [[ -z "$binary_path" ]]; then
         log_error "Binaire $BINARY_NAME non trouvé dans l'archive"
     fi
