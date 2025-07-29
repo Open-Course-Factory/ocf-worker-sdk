@@ -176,6 +176,7 @@ generate-completion:
 build-snapshot:
   stage: build
   image: goreleaser/goreleaser:${GORELEASER_VERSION}
+  entrypoint: [""]
   dependencies:
     - generate-completion
   before_script:
