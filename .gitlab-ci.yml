@@ -15,6 +15,7 @@ stages:
   - build
   - goreleaser
   - package
+  - prepare-release
   - release
   - distribute
 
@@ -250,18 +251,51 @@ upload-packages:
   rules:
     - if: $CI_COMMIT_TAG
 
-# release:
-#   stage: release
-#   image: registry.gitlab.com/gitlab-org/release-cli:latest
-#   rules:
-#     - if: $CI_COMMIT_TAG
-#   script:
-#     - |
-#       release-cli create \
-#       --name "Release ${VERSION}" \
-#       --tag-name $CI_COMMIT_TAG \
-#       --description "Your release notes here" \
-#       --assets-link "{\"name\":\"OCF Worker CLI\",\"url\":\"${PACKAGE_REGISTRY_URL}/filename\"}"
+# Mise à jour de la documentation
+update-docs:
+  stage: prepare-release
+  image: alpine:latest
+  script:
+    - echo "📚 Mise à jour de la documentation..."
+    - |
+      # Générer les stats de release
+      echo "Release ${CI_COMMIT_TAG} créée automatiquement" > release-notes.md
+      echo "" >> release-notes.md
+      echo "## Installation" >> release-notes.md
+      echo '```bash' >> release-notes.md
+      echo "curl -s ${CI_PROJECT_URL}/-/raw/main/install.sh | bash" >> release-notes.md
+      echo '```' >> release-notes.md
+  artifacts:
+    paths:
+      - release-notes.md
+    expire_in: 1 month
+  rules:
+    - if: $CI_COMMIT_TAG
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  dependencies: 
+   - update-docs
+   - goreleaser
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - |
+      # generate asset link arguments in a loop
+      asset_args=()
+      for file in dist/*.tar.gz; do
+        if [ -f "$file" ]; then
+          url="${PACKAGE_REGISTRY_URL}/$(basename "$file")"
+          asset_info='{"name":"'$file'","url":'$url'"}'
+          asset_args+=(--assets-link $asset_info)
+        fi
+      done
+      release-cli create \
+      --name "Release ${VERSION}" \
+      --tag-name $CI_COMMIT_TAG \
+      --description release-notes.md \
+      "${asset_args[@]}"
 
 # ==============================
 # DISTRIBUTION (Scripts d'installation)
@@ -352,26 +386,5 @@ notify-release:
       echo ""
       echo "📖 Plus d'infos: ${CI_PROJECT_URL}/-/releases/${CI_COMMIT_TAG}"
     # Ici vous pouvez ajouter des webhooks Slack, Discord, etc.
-  rules:
-    - if: $CI_COMMIT_TAG
-
-# Mise à jour de la documentation
-update-docs:
-  stage: distribute
-  image: alpine:latest
-  script:
-    - echo "📚 Mise à jour de la documentation..."
-    - |
-      # Générer les stats de release
-      echo "Release ${CI_COMMIT_TAG} créée automatiquement" > release-notes.md
-      echo "" >> release-notes.md
-      echo "## Installation" >> release-notes.md
-      echo '```bash' >> release-notes.md
-      echo "curl -s ${CI_PROJECT_URL}/-/raw/main/install.sh | bash" >> release-notes.md
-      echo '```' >> release-notes.md
-  artifacts:
-    paths:
-      - release-notes.md
-    expire_in: 1 month
   rules:
     - if: $CI_COMMIT_TAG
