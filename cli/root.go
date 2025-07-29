@@ -26,7 +26,7 @@ var rootCmd = &cobra.Command{
 à partir de dépôts GitHub en utilisant l'API OCF Worker.
 
 Exemples:
-  ocf-worker-cli generate https://github.com/nekomeowww/talks/tree/main/packages/2024-08-23-kubecon-hk
+  ocf-worker-cli generate https://github.com/ttamoud/presentation
   ocf-worker-cli health
   ocf-worker-cli themes list`,
 	Version: "0.0.1",

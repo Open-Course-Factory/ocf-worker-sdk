@@ -233,7 +233,7 @@ run-example: build ## Génère avec exemple personnalisable
 	@echo "$(YELLOW)Usage: make run-example URL=<github-url> [OUTPUT=<dir>]$(NC)"
 	@if [ -z "$(URL)" ]; then \
 		echo "$(RED)❌ Variable URL requise$(NC)"; \
-		echo "Exemple: make run-example URL=https://github.com/nekomeowww/talks/tree/main/packages/2024-08-23-kubecon-hk"; \
+		echo "Exemple: make run-example URL=https://github.com/ttamoud/presentation"; \
 		exit 1; \
 	fi
 	./$(BINARY_NAME) generate "$(URL)" --output "$(or $(OUTPUT),./output)" --verbose

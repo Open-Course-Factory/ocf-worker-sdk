@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/bash
+#!/bin/bash
 # OCF Worker CLI - Installation universelle
 # Usage: curl -s https://usine.solution-libre.fr/open-course-factory/ocf-worker-sdk/-/raw/main/install.sh | bash
 
@@ -52,7 +52,7 @@ print_banner() {
   | |  | | |    | |__    | |    | |  ___   _ _ | | _   ___  _ _   | |     | |      | |  
   | |  | | |    |  __|   | |    | | / _ \ | '__| |/ / / _ \| '__| | |     | |      | |  
   | |__| | |____| |      | |_/\_| || (_) || |  |   < |  __/| |    | |____ | |____ _| |_ 
-   \____/ \_____|_|      |______| | \___/ |_|  |_|\_\ \___||_|     \_____||______|_____|
+   \____/ \_____|_|      |________| \___/ |_|  |_|\_\ \___||_|     \_____||______|_____|
 
 EOF
     echo -e "${NC}"
