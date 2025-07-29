@@ -285,7 +285,7 @@ validate-install-script:
 .test-install-template: &test-install-template
   stage: distribute
   dependencies:
-    - release
+    - goreleaser
   script:
     - echo "🧪 Test d'installation sur $OS_NAME..."
     - chmod +x install.sh
