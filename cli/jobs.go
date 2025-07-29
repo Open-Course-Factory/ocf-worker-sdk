@@ -20,9 +20,9 @@ var jobsCmd = &cobra.Command{
 	Long: `Commandes pour gérer et surveiller les jobs de génération de présentations.
 
 Exemples:
-  ocf-cli jobs list
-  ocf-cli jobs status <job-id>
-  ocf-cli jobs logs <job-id>`,
+  ocf-worker-cli jobs list
+  ocf-worker-cli jobs status <job-id>
+  ocf-worker-cli jobs logs <job-id>`,
 }
 
 // jobsListCmd liste les jobs
@@ -113,7 +113,7 @@ var jobsStatusCmd = &cobra.Command{
 	Long: `Affiche les informations détaillées et le statut actuel d'un job.
 
 Exemples:
-  ocf-cli jobs status 550e8400-e29b-41d4-a716-446655440001`,
+  ocf-worker-cli jobs status 550e8400-e29b-41d4-a716-446655440001`,
 	Args: cobra.ExactArgs(1),
 	RunE: runJobsStatus,
 }
@@ -192,7 +192,7 @@ var jobsLogsCmd = &cobra.Command{
 	Long: `Affiche les logs détaillés d'exécution d'un job.
 
 Exemples:
-  ocf-cli jobs logs 550e8400-e29b-41d4-a716-446655440001`,
+  ocf-worker-cli jobs logs 550e8400-e29b-41d4-a716-446655440001`,
 	Args: cobra.ExactArgs(1),
 	RunE: runJobsLogs,
 }

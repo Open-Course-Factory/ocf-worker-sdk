@@ -29,13 +29,13 @@ var generateCmd = &cobra.Command{
 
 Exemples:
   # Génération basique
-  ocf-cli generate https://github.com/nekomeowww/talks/tree/main/packages/2024-08-23-kubecon-hk
+  ocf-worker-cli generate https://github.com/nekomeowww/talks/tree/main/packages/2024-08-23-kubecon-hk
 
   # Avec sous-dossier spécifique
-  ocf-cli generate https://github.com/user/repo --subfolder presentations/my-talk
+  ocf-worker-cli generate https://github.com/user/repo --subfolder presentations/my-talk
 
   # Avec options avancées
-  ocf-cli generate https://github.com/user/repo \
+  ocf-worker-cli generate https://github.com/user/repo \
     --output ./my-presentation \
     --wait-timeout 20m \
     --verbose`,

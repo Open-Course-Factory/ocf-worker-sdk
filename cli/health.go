@@ -19,8 +19,8 @@ var healthCmd = &cobra.Command{
 	Long: `Vérifie l'état de santé du service OCF Worker et affiche des informations détaillées.
 
 Exemples:
-  ocf-cli health
-  ocf-cli health --verbose`,
+  ocf-worker-cli health
+  ocf-worker-cli health --verbose`,
 	RunE: runHealth,
 }
 

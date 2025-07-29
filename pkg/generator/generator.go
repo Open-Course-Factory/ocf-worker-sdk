@@ -199,7 +199,7 @@ func (g *Generator) createAndWaitJob(ctx context.Context, jobID, courseID uuid.U
 		CourseID:   courseID,
 		SourcePath: "slides.md", // Fichier principal par défaut
 		Metadata: map[string]interface{}{
-			"generator": "ocf-cli",
+			"generator": "ocf-worker-cli",
 			"source":    "github",
 			"url":       g.config.GitHubURL,
 		},

@@ -17,9 +17,9 @@ var themesCmd = &cobra.Command{
 	Long: `Commandes pour gérer les thèmes Slidev disponibles et installés.
 
 Exemples:
-  ocf-cli themes list
-  ocf-cli themes install @slidev/theme-seriph
-  ocf-cli themes detect <job-id>`,
+  ocf-worker-cli themes list
+  ocf-worker-cli themes install @slidev/theme-seriph
+  ocf-worker-cli themes detect <job-id>`,
 }
 
 // themesListCmd liste les thèmes disponibles
@@ -90,8 +90,8 @@ var themesInstallCmd = &cobra.Command{
 	Long: `Installe un thème Slidev spécifique.
 
 Exemples:
-  ocf-cli themes install @slidev/theme-seriph
-  ocf-cli themes install academic`,
+  ocf-worker-cli themes install @slidev/theme-seriph
+  ocf-worker-cli themes install academic`,
 	Args: cobra.ExactArgs(1),
 	RunE: runThemesInstall,
 }
@@ -130,7 +130,7 @@ var themesDetectCmd = &cobra.Command{
 les thèmes Slidev requis.
 
 Exemples:
-  ocf-cli themes detect 550e8400-e29b-41d4-a716-446655440001`,
+  ocf-worker-cli themes detect 550e8400-e29b-41d4-a716-446655440001`,
 	Args: cobra.ExactArgs(1),
 	RunE: runThemesDetect,
 }
@@ -167,7 +167,7 @@ func runThemesDetect(cmd *cobra.Command, args []string) error {
 		}
 
 		cmd.Printf("\n💡 Pour installer automatiquement:\n")
-		cmd.Printf("   ocf-cli themes auto-install %s\n", jobID)
+		cmd.Printf("   ocf-worker-cli themes auto-install %s\n", jobID)
 	}
 
 	return nil
@@ -180,7 +180,7 @@ var themesAutoInstallCmd = &cobra.Command{
 	Long: `Détecte et installe automatiquement tous les thèmes requis pour un job.
 
 Exemples:
-  ocf-cli themes auto-install 550e8400-e29b-41d4-a716-446655440001`,
+  ocf-worker-cli themes auto-install 550e8400-e29b-41d4-a716-446655440001`,
 	Args: cobra.ExactArgs(1),
 	RunE: runThemesAutoInstall,
 }

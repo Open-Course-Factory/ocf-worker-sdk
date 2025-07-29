@@ -20,15 +20,15 @@ var (
 
 // rootCmd représente la commande de base quand appelée sans sous-commandes
 var rootCmd = &cobra.Command{
-	Use:   "ocf-cli",
+	Use:   "ocf-worker-cli",
 	Short: "OCF Worker CLI - Générateur de présentations Slidev",
 	Long: `OCF Worker CLI est un outil en ligne de commande pour générer des présentations Slidev
 à partir de dépôts GitHub en utilisant l'API OCF Worker.
 
 Exemples:
-  ocf-cli generate https://github.com/nekomeowww/talks/tree/main/packages/2024-08-23-kubecon-hk
-  ocf-cli health
-  ocf-cli themes list`,
+  ocf-worker-cli generate https://github.com/nekomeowww/talks/tree/main/packages/2024-08-23-kubecon-hk
+  ocf-worker-cli health
+  ocf-worker-cli themes list`,
 	Version: "0.0.1",
 }
 
@@ -44,7 +44,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	// Flags globaux persistants
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "fichier de config (défaut: $HOME/.ocf-cli.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "fichier de config (défaut: $HOME/.ocf-worker-cli.yaml)")
 	rootCmd.PersistentFlags().StringVar(&apiURL, "api-url", "http://localhost:8081", "URL de base de l'API OCF Worker")
 	rootCmd.PersistentFlags().StringVar(&authToken, "token", "", "token d'authentification OCF Worker")
 	rootCmd.PersistentFlags().DurationVar(&timeout, "timeout", 60*time.Second, "timeout des requêtes HTTP")
@@ -67,7 +67,7 @@ func initConfig() {
 
 		viper.AddConfigPath(home)
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".ocf-cli")
+		viper.SetConfigName(".ocf-worker-cli")
 	}
 
 	// Variables d'environnement

@@ -1,3 +1,5 @@
 coverage.out
 output
 dist
+scripts/completion
+ocf-worker-cli
