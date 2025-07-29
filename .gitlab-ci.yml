@@ -5,6 +5,7 @@ variables:
   GOOS: "linux"
   GOARCH: "amd64"
   GORELEASER_VERSION: "v2.11.1"
+  PACKAGE_REGISTRY_URL: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/ocf-worker-cli/${CI_COMMIT_TAG}
 
 stages:
   - validate
@@ -12,6 +13,8 @@ stages:
   - security
   - quality
   - build
+  - goreleaser
+  - package
   - release
   - distribute
 
@@ -197,8 +200,8 @@ build-snapshot:
 # ==============================
 
 # Release complète avec GoReleaser (tags uniquement)
-release:
-  stage: release
+goreleaser:
+  stage: goreleaser
   image: 
     name: goreleaser/goreleaser:${GORELEASER_VERSION}
     entrypoint: [""]
@@ -220,10 +223,10 @@ release:
 
 # Upload vers GitLab Package Registry
 upload-packages:
-  stage: release
+  stage: package
   image: curlimages/curl:latest
   dependencies:
-    - release
+    - goreleaser
   script:
     - echo "📤 Upload vers GitLab Package Registry..."
     - |
@@ -232,7 +235,7 @@ upload-packages:
           echo "Uploading $(basename "$file")..."
           curl --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
                --upload-file "$file" \
-               "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/ocf-worker-cli/${CI_COMMIT_TAG}/$(basename "$file")"
+               "${PACKAGE_REGISTRY_URL}/$(basename "$file")"
         fi
       done
     - |
@@ -241,11 +244,24 @@ upload-packages:
           echo "Uploading $(basename "$file")..."
           curl --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
                --upload-file "$file" \
-               "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/ocf-worker-cli/${CI_COMMIT_TAG}/$(basename "$file")"
+               "${PACKAGE_REGISTRY_URL}/$(basename "$file")"
         fi
       done
   rules:
     - if: $CI_COMMIT_TAG
+
+# release:
+#   stage: release
+#   image: registry.gitlab.com/gitlab-org/release-cli:latest
+#   rules:
+#     - if: $CI_COMMIT_TAG
+#   script:
+#     - |
+#       release-cli create \
+#       --name "Release ${VERSION}" \
+#       --tag-name $CI_COMMIT_TAG \
+#       --description "Your release notes here" \
+#       --assets-link "{\"name\":\"OCF Worker CLI\",\"url\":\"${PACKAGE_REGISTRY_URL}/filename\"}"
 
 # ==============================
 # DISTRIBUTION (Scripts d'installation)
