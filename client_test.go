@@ -181,7 +181,6 @@ func TestNewClient(t *testing.T) {
 			assert.NotNil(t, client.Jobs)
 			assert.NotNil(t, client.Storage)
 			assert.NotNil(t, client.Worker)
-			assert.NotNil(t, client.Themes)
 			assert.NotNil(t, client.Health)
 			assert.NotNil(t, client.Archive)
 
@@ -287,7 +286,6 @@ func TestClient_InterfaceCompliance(t *testing.T) {
 		var _ JobsServiceInterface = client.Jobs
 		var _ StorageServiceInterface = client.Storage
 		var _ WorkerServiceInterface = client.Worker
-		var _ ThemesServiceInterface = client.Themes
 		var _ HealthServiceInterface = client.Health
 		var _ ArchiveServiceInterface = client.Archive
 	})

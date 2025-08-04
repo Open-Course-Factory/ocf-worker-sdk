@@ -62,14 +62,6 @@ func main() {
 	}
 	fmt.Printf("Uploaded %d files\n", uploadResp.Count)
 
-	// Installer les thèmes automatiquement
-	themeResult, err := client.Themes.AutoInstallForJob(ctx, jobID.String())
-	if err != nil {
-		log.Printf("Theme installation warning: %v", err)
-	} else {
-		fmt.Printf("Installed %d themes\n", themeResult.Successful)
-	}
-
 	// Polling manuel
 	for {
 		status, err := client.Jobs.Get(ctx, jobID.String())

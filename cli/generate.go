@@ -19,6 +19,7 @@ var (
 	waitTimeout  time.Duration
 	waitInterval time.Duration
 	openResult   bool
+	npmPackages  []string
 )
 
 // generateCmd représente la commande generate
@@ -56,6 +57,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		WaitTimeout:  waitTimeout,
 		WaitInterval: waitInterval,
 		Verbose:      viper.GetBool("verbose"),
+		NpmPackages:  npmPackages,
 	}
 
 	// Valider la configuration
@@ -100,6 +102,7 @@ func init() {
 	generateCmd.Flags().DurationVar(&waitTimeout, "wait-timeout", 15*time.Minute, "timeout d'attente de completion")
 	generateCmd.Flags().DurationVar(&waitInterval, "wait-interval", 5*time.Second, "intervalle de polling")
 	generateCmd.Flags().BoolVar(&openResult, "open", false, "ouvrir automatiquement la présentation")
+	generateCmd.Flags().StringArrayVar(&npmPackages, "npm-package", []string{}, "package npm à installer en plus (peut être utilisé plusieurs fois)")
 
 	// Aliases
 	generateCmd.Aliases = []string{"gen", "g"}

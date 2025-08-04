@@ -92,12 +92,7 @@ func (g *Generator) Generate(ctx context.Context) (*Result, error) {
 		return nil, fmt.Errorf("upload échoué: %w", err)
 	}
 
-	// 6. Installation automatique des thèmes
-	if err := g.installThemes(ctx, jobID.String()); err != nil {
-		g.logger.Printf("⚠️ Avertissement thèmes: %v", err)
-	}
-
-	// 7. Génération
+	// 6. Génération
 	_, err = g.createAndWaitJob(ctx, jobID, courseID)
 	if err != nil {
 		logs, errLogs := g.client.Storage.GetLogs(ctx, jobID.String())
@@ -108,7 +103,7 @@ func (g *Generator) Generate(ctx context.Context) (*Result, error) {
 		return nil, fmt.Errorf("génération échouée: %w", err)
 	}
 
-	// 8. Téléchargement des résultats
+	// 7. Téléchargement des résultats
 	result, err := g.downloadResults(ctx, courseID.String())
 	if err != nil {
 		return nil, fmt.Errorf("téléchargement résultats échoué: %w", err)
@@ -168,29 +163,6 @@ func (g *Generator) uploadSources(ctx context.Context, jobID string, uploads []o
 	return nil
 }
 
-func (g *Generator) installThemes(ctx context.Context, jobID string) error {
-	g.logger.Printf("🎨 Installation automatique des thèmes...")
-
-	result, err := g.client.Themes.AutoInstallForJob(ctx, jobID)
-	if err != nil {
-		return err
-	}
-
-	g.logger.Printf("✅ %d thèmes installés", result.Successful)
-
-	if g.config.Verbose {
-		for _, theme := range result.Results {
-			status := "❌"
-			if theme.Success {
-				status = "✅"
-			}
-			g.logger.Printf("  %s %s", status, theme.Theme)
-		}
-	}
-
-	return nil
-}
-
 func (g *Generator) createAndWaitJob(ctx context.Context, jobID, courseID uuid.UUID) (*models.JobResponse, error) {
 	g.logger.Printf("🚀 Création du job de génération...")
 
@@ -203,6 +175,7 @@ func (g *Generator) createAndWaitJob(ctx context.Context, jobID, courseID uuid.U
 			"source":    "github",
 			"url":       g.config.GitHubURL,
 		},
+		Packages: g.config.NpmPackages,
 	}
 
 	waitOpts := &ocfworker.WaitOptions{

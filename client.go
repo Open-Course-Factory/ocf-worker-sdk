@@ -103,8 +103,6 @@ type Client struct {
 	Storage StorageServiceInterface
 	// Worker provides worker pool management capabilities
 	Worker WorkerServiceInterface
-	// Themes manages Slidev theme installation and detection
-	Themes ThemesServiceInterface
 	// Health provides service health monitoring
 	Health HealthServiceInterface
 	// Archive handles course archive downloads
@@ -221,7 +219,6 @@ func NewClient(baseURL string, opts ...Option) *Client {
 	client.Jobs = &JobsService{client: client}
 	client.Storage = &StorageService{client: client}
 	client.Worker = &WorkerService{client: client}
-	client.Themes = &ThemesService{client: client}
 	client.Health = &HealthService{client: client}
 	client.Archive = &ArchiveService{client: client}
 

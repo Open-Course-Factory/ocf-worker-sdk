@@ -29,7 +29,21 @@
       "env": {
         "LOG_LEVEL": "debug",
       },
-      "args": ["generate", "https://github.com/ttamoud/presentation"],
+      "args": ["generate", "https://github.com/hdm/decks-2024-lascon-numerology", "--npm-package", "@rollup/rollup-linux-x64-gnu"],
+      "showLog": true,
+      "trace": "verbose",
+    },
+    {
+      "name": "Debug CLI v2",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cli/main/main.go",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "LOG_LEVEL": "debug",
+      },
+      "args": ["generate", "https://github.com/george-gca/bracis_2023_srcaps"],
       "showLog": true,
       "trace": "verbose",
     },

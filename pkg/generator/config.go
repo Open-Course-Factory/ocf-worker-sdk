@@ -18,6 +18,7 @@ type Config struct {
 	WaitTimeout  time.Duration
 	WaitInterval time.Duration
 	Verbose      bool
+	NpmPackages  []string
 }
 
 // Validate valide la configuration

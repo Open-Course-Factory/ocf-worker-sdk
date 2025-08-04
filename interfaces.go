@@ -188,47 +188,6 @@ type WorkerServiceInterface interface {
 	CleanupOldWorkspaces(ctx context.Context, maxAgeHours int) (*models.WorkspaceCleanupBatchResponse, error)
 }
 
-// ThemesServiceInterface defines the contract for Slidev theme management.
-// Themes control the visual appearance and layout of generated presentations.
-//
-// Example usage:
-//
-//	// List available themes
-//	themes, err := client.Themes.ListAvailable(ctx)
-//	for _, theme := range themes.Themes {
-//		fmt.Printf("Theme: %s v%s - %s\n",
-//			theme.Name, theme.Version, theme.Description)
-//	}
-//
-//	// Auto-install themes for a job
-//	result, err := client.Themes.AutoInstallForJob(ctx, jobID)
-//	fmt.Printf("Installed %d themes successfully\n", result.Successful)
-type ThemesServiceInterface interface {
-	// ListAvailable returns all Slidev themes available for installation.
-	// This includes both official themes and custom themes registered
-	// with the OCF Worker instance.
-	ListAvailable(ctx context.Context) (*models.ThemeListResponse, error)
-
-	// Install manually installs a specific Slidev theme by name.
-	// The theme will be downloaded and made available for use in presentations.
-	//
-	// Returns installation status and any error messages.
-	Install(ctx context.Context, themeName string) (*models.ThemeInstallResponse, error)
-
-	// DetectForJob analyzes a job's source files to determine which themes
-	// are required but not yet installed.
-	//
-	// This is useful for understanding dependencies before job execution.
-	DetectForJob(ctx context.Context, jobID string) (*models.ThemeDetectionResponse, error)
-
-	// AutoInstallForJob automatically detects and installs all themes
-	// required by a job's source files.
-	//
-	// This is typically called after uploading sources but before starting
-	// job processing. Returns detailed results for each theme installation attempt.
-	AutoInstallForJob(ctx context.Context, jobID string) (*models.ThemeAutoInstallResponse, error)
-}
-
 // HealthServiceInterface defines the contract for service health monitoring.
 // This provides system-wide health information beyond just the worker pool.
 //
@@ -291,7 +250,6 @@ var (
 	_ JobsServiceInterface    = (*JobsService)(nil)
 	_ StorageServiceInterface = (*StorageService)(nil)
 	_ WorkerServiceInterface  = (*WorkerService)(nil)
-	_ ThemesServiceInterface  = (*ThemesService)(nil)
 	_ HealthServiceInterface  = (*HealthService)(nil)
 	_ ArchiveServiceInterface = (*ArchiveService)(nil)
 )

@@ -59,13 +59,7 @@ func TestCompleteWorkflow(t *testing.T) {
 		assert.Equal(t, 2, uploadResp.Count)
 	})
 
-	t.Run("4. Auto-install themes", func(t *testing.T) {
-		themeResult, err := client.Themes.AutoInstallForJob(ctx, jobID.String())
-		require.NoError(t, err)
-		assert.Equal(t, 1, themeResult.Successful)
-	})
-
-	t.Run("5. Wait for job completion", func(t *testing.T) {
+	t.Run("4. Wait for job completion", func(t *testing.T) {
 		opts := &WaitOptions{
 			Interval: 100 * time.Millisecond,
 			Timeout:  10 * time.Second,
@@ -76,7 +70,7 @@ func TestCompleteWorkflow(t *testing.T) {
 		assert.Equal(t, models.StatusCompleted, job.Status)
 	})
 
-	t.Run("6. List and download results", func(t *testing.T) {
+	t.Run("5. List and download results", func(t *testing.T) {
 		results, err := client.Storage.ListResults(ctx, courseID.String())
 		require.NoError(t, err)
 		assert.Contains(t, results.Files, "presentation.pdf")
@@ -92,7 +86,7 @@ func TestCompleteWorkflow(t *testing.T) {
 		assert.Contains(t, string(pdfContent), "PDF content")
 	})
 
-	t.Run("7. Download archive", func(t *testing.T) {
+	t.Run("6. Download archive", func(t *testing.T) {
 		archiveReader, err := client.Archive.DownloadArchive(ctx, courseID.String(), &DownloadArchiveOptions{
 			Format:   "zip",
 			Compress: &[]bool{true}[0],
@@ -368,17 +362,6 @@ func setupCompleteWorkflowResponses(t *testing.T, server *TestServer, jobID, cou
 	// File upload
 	server.On("POST", "/api/v1/storage/jobs/"+jobID.String()+"/sources", func(w http.ResponseWriter, r *http.Request) {
 		RespondJSON(w, http.StatusCreated, &models.FileUploadResponse{Count: 2})
-	})
-
-	// Theme auto-install
-	server.On("POST", "/api/v1/themes/jobs/"+jobID.String()+"/install", func(w http.ResponseWriter, r *http.Request) {
-		result := &models.ThemeAutoInstallResponse{
-			Successful: 1,
-			Results: []models.ThemeInstallResult{
-				{Theme: "default", Success: true, Logs: []string{"Installed successfully"}},
-			},
-		}
-		RespondJSON(w, http.StatusOK, result)
 	})
 
 	// Job status polling (pending -> processing -> completed)

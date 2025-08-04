@@ -3,7 +3,6 @@ module ocf-worker-sdk
 go 1.24.5
 
 require (
-	github.com/Open-Course-Factory/ocf-worker v0.0.3
 	github.com/google/uuid v1.6.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
@@ -11,6 +10,7 @@ require (
 )
 
 require (
+	github.com/Open-Course-Factory/ocf-worker v0.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
