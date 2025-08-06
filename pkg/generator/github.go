@@ -10,6 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/storage/memory"
 )
 
 // GitHubDownloader gère le téléchargement des dépôts GitHub
@@ -51,7 +54,7 @@ func (d *GitHubDownloader) DownloadRepo(ctx context.Context, repoURL, outputDir,
 	}
 
 	// Construire l'URL ZIP
-	zipURL := fmt.Sprintf("https://github.com/%s/%s/archive/refs/heads/%s.zip", owner, repo, branch)
+	zipURL := fmt.Sprintf("https://github.com/%s/%s/archive/%s.zip", owner, repo, branch)
 
 	// Télécharger
 	req, err := http.NewRequestWithContext(ctx, "GET", zipURL, nil)
@@ -95,13 +98,15 @@ func (d *GitHubDownloader) DownloadRepo(ctx context.Context, repoURL, outputDir,
 	}
 
 	// Extraire
-	return d.extractRepo(tempFile.Name(), outputDir, fmt.Sprintf("%s-%s", repo, branch), subPath)
+	branchSplit := strings.Split(branch, "/")
+	branchShortName := branchSplit[len(branchSplit)-1]
+	return d.extractRepo(tempFile.Name(), outputDir, fmt.Sprintf("%s-%s", repo, branchShortName), subPath)
 }
 
 func parseGitHubURL(url string) (owner, repo, branch, subPath string) {
 	// Supprimer le préfixe
-	url = strings.TrimPrefix(url, "https://github.com/")
-	parts := strings.Split(url, "/")
+	trimmedUrl := strings.TrimPrefix(url, "https://github.com/")
+	parts := strings.Split(trimmedUrl, "/")
 
 	if len(parts) < 2 {
 		return
@@ -109,7 +114,18 @@ func parseGitHubURL(url string) (owner, repo, branch, subPath string) {
 
 	owner = parts[0]
 	repo = parts[1]
-	branch = "main" // défaut
+
+	gitRepo, errGitOpen := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
+		URL:      url,
+		Progress: os.Stdout,
+	})
+	if errGitOpen != nil {
+		fmt.Printf("Failed opening git repo %s bytes: %v\n", url, errGitOpen)
+	}
+
+	head, _ := gitRepo.Head()
+
+	branch = head.Name().String()
 
 	// Gérer tree/branch/path
 	if len(parts) > 2 && parts[2] == "tree" {

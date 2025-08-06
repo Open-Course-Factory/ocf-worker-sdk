@@ -45,7 +45,7 @@ func init() {
 
 	// Flags globaux persistants
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "fichier de config (défaut: $HOME/.ocf-worker-cli.yaml)")
-	rootCmd.PersistentFlags().StringVar(&apiURL, "api-url", "http://localhost:8081", "URL de base de l'API OCF Worker")
+	rootCmd.PersistentFlags().StringVar(&apiURL, "api-url", "https://worker.ocf.solution-libre.fr", "URL de base de l'API OCF Worker")
 	rootCmd.PersistentFlags().StringVar(&authToken, "token", "", "token d'authentification OCF Worker")
 	rootCmd.PersistentFlags().DurationVar(&timeout, "timeout", 60*time.Second, "timeout des requêtes HTTP")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "mode verbeux")

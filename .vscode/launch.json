@@ -43,7 +43,7 @@
       "env": {
         "LOG_LEVEL": "debug",
       },
-      "args": ["generate", "https://github.com/george-gca/bracis_2023_srcaps"],
+      "args": ["generate", "https://github.com/alexanderdavide/dev-environment-as-code"],
       "showLog": true,
       "trace": "verbose",
     },
