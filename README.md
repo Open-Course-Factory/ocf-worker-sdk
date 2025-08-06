@@ -289,28 +289,6 @@ if err != nil {
 }
 ```
 
-### Theme Management
-
-```go
-// List available themes
-themes, err := client.Themes.ListAvailable(ctx)
-if err != nil {
-    log.Fatalf("Failed to list themes: %v", err)
-}
-
-for _, theme := range themes.Themes {
-    fmt.Printf("Theme: %s v%s - %s\n", theme.Name, theme.Version, theme.Description)
-}
-
-// Auto-install themes for a job
-themeResult, err := client.Themes.AutoInstallForJob(ctx, jobID.String())
-if err != nil {
-    log.Printf("Theme installation warning: %v", err)
-} else {
-    fmt.Printf("Installed %d themes successfully\n", themeResult.Successful)
-}
-```
-
 ### Worker Management
 
 ```go
