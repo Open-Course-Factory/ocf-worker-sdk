@@ -118,19 +118,6 @@ ocf-worker-cli jobs status <job-id>
 ocf-worker-cli jobs logs <job-id>
 ```
 
-### Gestion des thèmes
-
-```bash
-# Lister les thèmes disponibles
-ocf-worker-cli themes list
-
-# Installer un thème
-ocf-worker-cli themes install @slidev/theme-seriph
-
-# Auto-installation pour un job
-ocf-worker-cli themes auto-install <job-id>
-```
-
 ## 🔍 Troubleshooting
 
 ### Problèmes courants

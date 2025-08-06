@@ -2,7 +2,7 @@
 
 [![Go Version](https://img.shields.io/badge/go-1.23+-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/license-AGPLv3-green.svg)](LICENSE)
-[![Coverage](https://img.shields.io/badge/coverage-80%25-brightgreen.svg)](#)
+![Coverage](https://img.shields.io/badge/coverage-80%25-brightgreen.svg)
 [![GoDoc](https://godoc.org/github.com/Open-Course-Factory/ocf-worker-sdk?status.svg)](https://godoc.org/github.com/Open-Course-Factory/ocf-worker-sdk)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Open-Course-Factory/ocf-worker-sdk)](https://goreportcard.com/report/github.com/Open-Course-Factory/ocf-worker-sdk)
 
@@ -26,6 +26,7 @@ go get github.com/Open-Course-Factory/ocf-worker-sdk
 ```
 
 **Requirements:**
+
 - Go 1.23 or later
 - Access to an OCF Worker instance
 
