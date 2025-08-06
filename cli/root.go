@@ -29,7 +29,7 @@ Exemples:
   ocf-worker-cli generate https://github.com/ttamoud/presentation
   ocf-worker-cli health
   ocf-worker-cli themes list`,
-	Version: "0.0.1",
+	Version: "0.0.6",
 }
 
 // Execute ajoute toutes les commandes enfant à la commande racine et définit les flags appropriés.
